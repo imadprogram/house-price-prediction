@@ -4,37 +4,77 @@ An end-to-end Machine Learning solution designed for real estate valuation. This
 
 ---
 
-## 🏗️ Architecture & Pipeline Diagram
+## 📐 UML Diagrams
+
+### 1. UML Class Diagram
+Represents the structural design, classes, methods, and component relationships within the application:
 
 ```mermaid
-flowchart TD
-    subgraph Data Layer
-        A["House_Prices.csv (2919 records, 81 features)"] --> B["Data Cleaning & Imputation"]
+classDiagram
+    class Dataset {
+        +String path
+        +DataFrame raw_data
+        +DataFrame clean_data
+        +load_data() DataFrame
+        +impute_missing(df) DataFrame
+    }
+
+    class FeatureEngineering {
+        +add_engineered_features(df) DataFrame
+    }
+
+    class MLPipeline {
+        +ColumnTransformer preprocessor
+        +GradientBoostingRegressor regressor
+        +fit(X_train, y_train)
+        +predict(X_test) ndarray
+    }
+
+    class PredictService {
+        +String MODEL_PATH
+        +load_model(path) Pipeline
+        +predict_price(input_df, model) float
+    }
+
+    class StreamlitApp {
+        +get_model() Pipeline
+        +get_data() DataFrame
+        +render_ui()
+        +display_prediction(price)
+    }
+
+    Dataset --> FeatureEngineering : feeds raw records
+    FeatureEngineering --> MLPipeline : delivers enriched features
+    MLPipeline --> PredictService : exports best_model.joblib
+    PredictService --> StreamlitApp : serves real-time predictions
+```
+
+---
+
+### 2. UML Use Case Diagram
+Illustrates the user interactions and functional boundaries of the platform:
+
+```mermaid
+flowchart LR
+    subgraph Platform["System Boundary: House Price Valuation Platform"]
+        UC1(["Estimate Property Sale Price"])
+        UC2(["Input Physical Characteristics"])
+        UC3(["View Neighborhood Price Distribution"])
+        UC4(["Train & Tune Regression Models"])
+        UC5(["Execute Automated Tests"])
+        UC6(["Deploy Containerized Application"])
     end
 
-    subgraph Feature Engineering
-        B --> C["Engineered Features\n(TotalSF, TotalBath, HouseAge, YearsSinceRemodel)"]
-        C --> D["Train / Test Split (80/20)"]
-    end
+    Agent["👤 Real Estate Agent / Client"]
+    MLE["💻 Data Scientist / ML Engineer"]
 
-    subgraph Preprocessing Pipeline
-        D --> E["ColumnTransformer"]
-        E -->|StandardScaler| F["Scaled Numeric Matrix"]
-        E -->|OneHotEncoder| G["Encoded Categorical Matrix"]
-    end
+    Agent --> UC2
+    UC2 -.->|includes| UC1
+    UC1 -.->|extends| UC3
 
-    subgraph Modeling & Optimization
-        F & G --> H["Model Comparison\n(Ridge vs RF vs Gradient Boosting)"]
-        H --> I["5-Fold Cross-Validation (KFold)"]
-        I --> J["GridSearchCV Optimization"]
-        J --> K["Serialized Artifact\n(models/best_model.joblib)"]
-    end
-
-    subgraph Production & Serving
-        K --> L["Inference Engine (src/predict.py)"]
-        L --> M["Streamlit Dashboard (dashboard/app.py)"]
-        M --> N["Docker Container (Port 8501)"]
-    end
+    MLE --> UC4
+    MLE --> UC5
+    MLE --> UC6
 ```
 
 ---
